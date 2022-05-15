@@ -47,4 +47,16 @@ print(ret["tokens"], ret["labels"])
 ### Additional features
 There are a few options that you may find useful during your refinement.
 
-You can use a pivot model to compute logits for each token, and provide them to the front-end. Those logits will be softmaxed (you can switch this off using `apply_softmax_to_logits=False`, in case your "logits" are actually class activations) to compute class m
+You can use a pivot model to compute logits for each token, and provide them to the front-end. Those logits will be softmaxed (you can switch this off using `apply_softmax_to_logits=False`, in case your "logits" are actually class activations) to compute class margins (largest activation minus second largest activation). These margins will be used as a token-wise heatmap, thus providing visual information about where your pivot model was uncertain during the inference. This information may leverage your refinement process.
+```python
+import segmentador
+model = segmentador.BERTSegmenter(uri_model="../pretrained_model/4_layer_model")
+seg_result = model(tokens, return_logits=True)
+interactive_labeling.open_example(tokens=tokens, labels=labels, logits=seg_result.logits)
+```
+
+You can also recover a boolean list of which tokens where modified in front-end:
+```python
+ret = interactive_labeling.retrieve_refined_example(return_modified_list=True)
+print(ret["modified"])
+```
