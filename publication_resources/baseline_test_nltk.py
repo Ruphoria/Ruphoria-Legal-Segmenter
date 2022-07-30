@@ -126,4 +126,25 @@ print("Number of additional abbreviations:", len(NATURAL_TEXT_SEG_ABBRV))
 # Tokenizer info: https://github.com/ulysses-camara/ulysses-segmenter?tab=readme-ov-file#available-models
 
 test_docs = baseline_utils.load_ground_truth_sentences(
-    test_uri="data/dataset_ulysses_segmenter_v2_active_l
+    test_uri="data/dataset_ulysses_segmenter_v2_active_learning_curated_only",
+    tokenizer_uri="tokenizers/6000_subwords",
+    group_by_document=True,
+)
+segs_true = list(itertools.chain(*test_docs))
+
+
+tokenizer = nltk.data.load("tokenizers/punkt/portuguese.pickle")
+segs_pred = []
+for doc in test_docs:
+    segs_pred.extend(tokenizer.tokenize(" ".join(doc)))
+print("Results without additional abbreviations:")
+print(approx_recall_and_precision.estimate_seg_perf(sentences_pred=segs_pred, sentences_true=segs_true))
+
+# NOTE: injecting additional abbreviations into NLTK model.
+tokenizer._params.abbrev_types.update(NATURAL_TEXT_SEG_ABBRV)
+
+segs_pred = []
+for doc in test_docs:
+    segs_pred.extend(tokenizer.tokenize(" ".join(doc)))
+print("Results with additional abbreviations:")
+print(approx_recall_and_precision.estimate_seg_perf(sentences_pred=segs_pred, sentences_true=segs_true))
