@@ -342,4 +342,52 @@ fetch(fetch_url_data)
   d3.selectAll(".token")
     .filter(function() { return d3.select(this).attr("label") == -100; })
     .style("margin-left", 0)
-   
+    .style("padding-left", 0)
+    .style("border-left", 0)
+    .attr("disabled", true)
+    .classed("hoverable", false)
+    .style("border-style", "none");
+
+  const htmlSegStartTokens = d3.selectAll(".token")
+    .filter(function(d, i) {
+      return i == 0 || d3.select(this).attr("label") == 1;
+    });
+
+  fn_insertSegmentStartElements(htmlSegStartTokens);
+
+  d3.select("#button-save")
+    .on("click", fn_saveModifications);
+
+  /* Setup */
+  fn_updateSegmentNumbering();
+  fn_setTokensTextColor();
+  fn_updateTotalModifiedTokens(totalTokens);
+
+  d3.select("#segment-start-0")
+    .selectChild(".segment-start-rule")
+      .style("margin-top", "0px")
+      .style("margin-bottom", "0px")
+      .style("color", "#232526");
+});
+
+const intervalInMilliseconds = 5000;
+let intervalInSeconds = intervalInMilliseconds * 0.001;
+d3.select("#refresh-countdown-panel-value")
+  .text(Math.round(intervalInSeconds));
+
+const intervalCountdown = setInterval(function() {
+  intervalInSeconds = Math.max(0, intervalInSeconds - 1);
+  d3.select("#refresh-countdown-panel-value")
+    .text(Math.round(intervalInSeconds));
+}, 1000);
+
+const intervalRefresh = setInterval(function() {
+  fetch(fetch_url_refresh)
+    .then((response) => response.json())
+    .then((response_content) => {
+      if (response_content["need_refresh"]) {
+        window.location.reload();
+      }
+      intervalInSeconds = intervalInMilliseconds * 0.001;
+    });
+}, intervalInMilliseconds);
