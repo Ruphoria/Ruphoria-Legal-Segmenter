@@ -213,4 +213,25 @@ def run():
     )
 
     results_lstm = validate_all_models(
-        segmenter_cls=segmentado
+        segmenter_cls=segmentador.LSTMSegmenter,
+        dt=dt,
+        uri_models=[
+            f"{hidden_layer_size}_hidden_dim_6000_vocab_size_1_layer_lstm_v2.pt" for hidden_layer_size in (128, 256, 512)
+        ],
+        moving_window_sizes=(128, 256, 512, 1024, 2048, 4096),
+        uri_tokenizers="tokenizers/6000_subwords",
+        device="cuda:0",
+        batch_size=64,
+    )
+
+    print(len(results_bert), len(results_lstm))
+    all_results = {**results_bert, **results_lstm}
+
+    print(all_results)
+
+    with open("all_results_inference.json", "w", encoding="utf-8") as f_out:
+        json.dump(all_results, f_out)
+
+
+if __name__ == "__main__":
+    run()
