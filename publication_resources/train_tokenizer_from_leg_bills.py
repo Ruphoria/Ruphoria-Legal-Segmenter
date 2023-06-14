@@ -27,4 +27,22 @@ df = df.iloc[good_inds]
 RE_JUSTIFICATIVA = regex.compile(
     r"\s*(?:"
     + r"J\s*U\s*S\s*T\s*I\s*F\s*I\s*C\s*A?\s*T\s*I\s*V\s*A|"
- 
+    + r"J\s*u\s*s\s*t\s*i\s*f\s*i\s*c\s*a\s*t\s*i\s*v\s*a\s+(?=["
+    + UPPERCASE_LETTERS
+    + r"])|"
+    + r"J\s*U\s*S\s*T\s*I\s*F\s*I\s*C\s*A\s*[CÇ]\s*[AÂÃÀÁ]\s*O|"
+    + r"J\s*u\s*s\s*t\s*i\s*f\s*i\s*c\s*a\s*[cç]\s*[aãâàá]\s*o\s+(?=["
+    + UPPERCASE_LETTERS
+    + r"])"
+    + r")"
+)
+
+RE_ANEXO = regex.compile(r"\s*A\s*N\s*E\s*X\s*O")
+
+# NOTE: removing less relevant sections.
+df = df.map(lambda item: RE_JUSTIFICATIVA.split(item)[0])
+df = df.map(lambda item: RE_ANEXO.split(item)[0])
+
+tokenizer = tokenizer.train_new_from_iterator(df, vocab_size=VOCAB_SIZE)
+
+tokenizer.save_pretrained(TOKENIZER_OUTPUT_DIR)
