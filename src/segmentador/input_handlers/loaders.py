@@ -69,4 +69,19 @@ def get_model_uri_if_local_file(
         Model URI if found locally, `model_name` otherwise.
     """
     uri_model = str(model_name).strip()
-    uri_model = os.path.join(download_dir, ur
+    uri_model = os.path.join(download_dir, uri_model)
+    uri_model = os.path.expanduser(uri_model)
+    uri_model = os.path.realpath(uri_model)
+
+    file_extension = file_extension.strip()
+
+    if file_extension and not file_extension.startswith("."):
+        file_extension = f".{file_extension}"
+
+    if file_extension and not uri_model.endswith(file_extension):
+        uri_model += file_extension
+
+    if not os.path.exists(uri_model):
+        return model_name
+
+    return uri_model
