@@ -794,4 +794,45 @@ def quantize_model(
     if model_output_format not in {"onnx", "torch_jit"}:
         raise ValueError(
             f"Unsupported 'model_output_format={model_output_format}'. "
-            "Please choose either 'onnx' or 'torch_jit'.
+            "Please choose either 'onnx' or 'torch_jit'."
+        )
+
+    fn_kwargs: t.Dict[str, t.Any] = {
+        "model": model,
+        "quantized_model_filename": quantized_model_filename,
+        "quantized_model_dirpath": quantized_model_dirpath,
+        "check_cached": check_cached,
+        "verbose": verbose,
+    }
+
+    fn_quantization_factory: t.Dict[
+        t.Tuple[t.Type[_base.BaseSegmenter], str], t.Callable[..., QuantizationOutput]
+    ] = {
+        (segmenter.BERTSegmenter, "torch_jit"): quantize_bert_model_as_torch,
+        (segmenter.BERTSegmenter, "onnx"): quantize_bert_model_as_onnx,
+        (segmenter.LSTMSegmenter, "torch_jit"): quantize_lstm_model_as_torch,
+        (segmenter.LSTMSegmenter, "onnx"): quantize_lstm_model_as_onnx,
+    }
+
+    try:
+        fn_quantization = fn_quantization_factory[(type(model), model_output_format)]
+
+    except KeyError as e_key:
+        raise ValueError(
+            f"Unsupported 'model_output_format={model_output_format}' for segmenter "
+            f"type={type(model)}."
+        ) from e_key
+
+    if model_output_format == "onnx" and isinstance(model, segmenter.LSTMSegmenter):
+        v_major, v_minor, _ = platform.python_version_tuple()
+        fn_kwargs["onnx_opset_version"] = onnx_opset_version
+
+        if 100 * int(v_major) + int(v_minor) < 310 and onnx_opset_version > 15:
+            warnings.warn(
+                f"Unsupported onnx_opset_version={onnx_opset_version} for Python version < 3.10 "
+                f"(detected '{v_major}.{v_minor}'). Setting it to '15'.",
+                UserWarning,
+            )
+            fn_kwargs["onnx_opset_version"] = 15
+
+    return fn_quantization(**fn_kwargs, **kwargs)
